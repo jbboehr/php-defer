@@ -16,9 +16,25 @@
         "type": "github"
       }
     },
+    "ext-ast_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1699788704,
+        "narHash": "sha256-ZrkTdRKpGjgx3p922L0adAFrJyjttWhYepjKSSQ4qCk=",
+        "owner": "nikic",
+        "repo": "php-ast",
+        "rev": "4c5efd5dbf139b9ac80b1df151b89112bb5bd779",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nikic",
+        "repo": "php-ast",
+        "type": "github"
+      }
+    },
     "ext-vyrtue": {
       "inputs": {
-        "ext-ast": "ext-ast",
+        "ext-ast": "ext-ast_2",
         "flake-utils": "flake-utils",
         "gitignore": "gitignore",
         "nixpkgs": [
@@ -27,11 +43,11 @@
         "pre-commit-hooks": "pre-commit-hooks"
       },
       "locked": {
-        "lastModified": 1707606204,
-        "narHash": "sha256-1NFOyydN4TyRKM2JmQ4MzhV2oCC1L43bZsS6YVcYV8c=",
+        "lastModified": 1707703954,
+        "narHash": "sha256-ZLG4R82bYDM5PmBRvqwcT27lPeGnxcmJ8clnbXMqO0Q=",
         "owner": "jbboehr",
         "repo": "php-vyrtue",
-        "rev": "29b2ec148b98e9ef72d327982973cb55a1764a26",
+        "rev": "9a06bf2b166201afbf432ccbbfa511ef2bdcac46",
         "type": "github"
       },
       "original": {
@@ -231,6 +247,7 @@
     },
     "root": {
       "inputs": {
+        "ext-ast": "ext-ast",
         "ext-vyrtue": "ext-vyrtue",
         "flake-utils": "flake-utils_2",
         "gitignore": "gitignore_2",
