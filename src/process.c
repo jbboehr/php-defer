@@ -68,7 +68,11 @@ zend_ast *defer_process_visitor_call_defer_leave(zend_ast *ast, struct vyrtue_co
 
     // Convert to closure
     if (arg->kind != ZEND_AST_CLOSURE && arg->kind != ZEND_AST_ARROW_FUNC) {
+#if PHP_VERSION_ID >= 80200
+        zend_ast *stmt_list = arg;
+#else
         zend_ast *stmt_list = zend_ast_create_list_1(ZEND_AST_STMT_LIST, arg);
+#endif
 
         zend_ast *arg_list = zend_ast_create_list_0(ZEND_AST_ARG_LIST);
 
