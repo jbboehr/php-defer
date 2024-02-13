@@ -1,4 +1,9 @@
 
+m4_include(m4/ax_require_defined.m4)
+m4_include(m4/ax_prepend_flag.m4)
+m4_include(m4/ax_compiler_vendor.m4)
+m4_include(m4/ax_cflags_warn_all.m4)
+
 PHP_ARG_ENABLE(defer, whether to enable defer support,
 [  --enable-defer     Enable defer support])
 
@@ -7,6 +12,9 @@ AC_DEFUN([PHP_DEFER_ADD_SOURCES], [
 ])
 
 if test "$PHP_DEFER" != "no"; then
+    AX_CFLAGS_WARN_ALL([WARN_CFLAGS])
+    CFLAGS="$WARN_CFLAGS $CFLAGS"
+
     PHP_DEFER_ADD_SOURCES([
         src/extension.c
         src/process.c

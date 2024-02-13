@@ -17,6 +17,10 @@
       inputs.flake-utils.follows = "flake-utils";
       inputs.gitignore.follows = "gitignore";
     };
+    ext-ast = {
+      url = "github:nikic/php-ast";
+      flake = false;
+    };
     ext-vyrtue = {
       url = "github:jbboehr/php-vyrtue";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,6 +33,7 @@
     flake-utils,
     gitignore,
     pre-commit-hooks,
+    ext-ast,
     ext-vyrtue,
   } @ args:
     flake-utils.lib.eachDefaultSystem (
@@ -64,6 +69,9 @@
           vyrtue,
         }:
           php.buildEnv {
+            extraConfig = ''
+              include_path = .:${ext-ast}/
+            '';
             extensions = {
               enabled,
               all,

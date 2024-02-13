@@ -27,6 +27,7 @@
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"
 #include "Zend/zend_exceptions.h"
+#include <Zend/zend_interfaces.h>
 #include "Zend/zend_ini.h"
 #include "Zend/zend_modules.h"
 #include "Zend/zend_operators.h"
@@ -35,6 +36,7 @@
 #include "main/php_ini.h"
 #include "ext/standard/info.h"
 #include "ext/standard/php_string.h"
+#include <ext/standard/php_var.h>
 #include "ext/vyrtue/php_vyrtue.h"
 
 #include "php_defer.h"
@@ -58,6 +60,41 @@ zend_ast *defer_process_visitor_call_defer_leave(zend_ast *ast, struct vyrtue_co
 
 DEFER_LOCAL
 zend_ast *defer_process_visitor_function_leave(zend_ast *ast, struct vyrtue_context *ctx);
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO(call_functions_arginfo, IS_VOID, 0)
+    ZEND_ARG_TYPE_INFO(0, functions, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+PHP_FUNCTION(call_functions)
+{
+    HashTable *functions;
+    zval *fn;
+    zend_object *exception;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_ARRAY_HT(functions)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ZEND_HASH_REVERSE_FOREACH_VAL(functions, fn)
+    {
+        zval retval = {0};
+        ZVAL_NULL(&retval);
+        call_user_function(NULL, NULL, fn, &retval, 0, NULL);
+        zval_ptr_dtor(&retval);
+
+        if (EG(exception)) {
+            exception = EG(exception);
+            zend_exception_save();
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+
+    if (exception) {
+        zend_exception_restore();
+    }
+
+    RETURN_NULL();
+}
 
 static PHP_MINIT_FUNCTION(defer)
 {
@@ -110,6 +147,7 @@ static PHP_GINIT_FUNCTION(defer)
 
 // clang-format off
 const zend_function_entry defer_functions[] = {
+    ZEND_RAW_FENTRY("DeferExt\\call_functions", ZEND_FN(call_functions), call_functions_arginfo, 0)
     PHP_FE_END
 };
 // clang-format on
