@@ -10,7 +10,8 @@ function f() {
     defer(fn() => var_dump(2));
     var_dump(3);
 }
-
 f();
 --EXPECT--
-acb
+int(1)
+int(3)
+int(2)

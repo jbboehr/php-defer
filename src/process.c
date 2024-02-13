@@ -58,8 +58,6 @@ zend_ast *defer_process_visitor_call_defer_leave(zend_ast *ast, struct vyrtue_co
     zend_ast *scope = vyrtue_context_scope_stack_top_ast(ctx);
     HashTable *arr = get_or_update_scope_ht(ctx);
 
-    fprintf(stderr, "TOP AST KIND: %d (ZEND_AST_FUNC_DECL=%d)\n", scope->kind, ZEND_AST_FUNC_DECL);
-
     if (UNEXPECTED(ast->child[1]->kind != ZEND_AST_ARG_LIST)) {
         zend_error(E_WARNING, "defer: not a arg list");
         return NULL;
@@ -95,34 +93,28 @@ zend_ast *defer_process_visitor_call_defer_leave(zend_ast *ast, struct vyrtue_co
         closure_ast = arg;
     }
 
-    // Convert to array_push
+    // Convert to array append
     zend_string *str;
 
     str = zend_string_init_interned(ZEND_STRL("deferred_fns"), 0);
-    zend_ast *register_ast = zend_ast_create_zval_from_str(str);
-    register_ast->lineno = ast->lineno;
+    zend_ast *var_name_ast = zend_ast_create_zval_from_str(str);
 
-    zend_ast *var_ast = zend_ast_create_1(ZEND_AST_VAR, register_ast);
+    zend_ast *var_ast = zend_ast_create_ex_1(ZEND_AST_VAR, ZEND_ARRAY_SYNTAX_SHORT, var_name_ast);
 
-    zend_ast *arg_list_ast = zend_ast_create_list_2(ZEND_AST_ARG_LIST, register_ast, closure_ast);
+    zend_ast *dim_ast = zend_ast_create_2(ZEND_AST_DIM, var_ast, NULL);
 
-    str = zend_string_init_interned(ZEND_STRL("\\array_push"), 0);
-    zend_ast *function_ast = zend_ast_create_zval_from_str(str);
-
-    zend_ast *call_ast = zend_ast_create_2(ZEND_AST_CALL, function_ast, arg_list_ast);
+    zend_ast *assign_ast = zend_ast_create(ZEND_AST_ASSIGN, dim_ast, closure_ast);
 
     // store the old argument in our array for later
     zend_hash_next_index_insert_ptr(arr, arg);
 
-    return call_ast;
+    return assign_ast;
 }
 
 DEFER_LOCAL
 zend_ast *defer_process_visitor_function_leave(zend_ast *ast, struct vyrtue_context *ctx)
 {
     HashTable *arr = get_scope_ht(ctx);
-
-    fprintf(stderr, "LEAVING SCOPE kind=%d, count=%d\n", ast->kind, arr ? zend_array_count(arr) : 0);
 
     // nothing to do
     if (NULL == arr || zend_array_count(arr) <= 0) {
@@ -141,8 +133,6 @@ zend_ast *defer_process_visitor_function_leave(zend_ast *ast, struct vyrtue_cont
         return NULL;
     }
 
-    fprintf(stderr, "MooO? %d %d\n", ast->kind, ZEND_AST_FUNC_DECL);
-
     zend_ast_decl *decl = (zend_ast_decl *) ast;
     zend_ast *stmt = decl->child[2];
 
@@ -151,12 +141,18 @@ zend_ast *defer_process_visitor_function_leave(zend_ast *ast, struct vyrtue_cont
         return NULL;
     }
 
-    //    if (stmt->kind != ZEND_AST_STMT_LIST) {
-    //        zend_throw_exception_ex(zend_ce_compile_error, 0, "defer: function body not a statement list");
-    //        return NULL;
-    //    }
+    // Wrap in try/finally
+    zend_ast *empty_catches_ast = zend_ast_create_list_0(ZEND_AST_STMT_LIST);
 
-    fprintf(stderr, "AST |||%s|||\n", zend_ast_export("", ast, "")->val);
+    zend_ast *finally_ast = zend_ast_create_list_0(ZEND_AST_STMT_LIST);
+    // @todo actually handle the deferred functions
+
+    zend_ast *try_ast = zend_ast_create_3(ZEND_AST_TRY, stmt, empty_catches_ast, finally_ast);
+
+    zend_ast *new_list_ast = zend_ast_create_list_1(ZEND_AST_STMT_LIST, try_ast);
+
+    // Swap
+    decl->child[2] = new_list_ast;
 
     return NULL;
 }
