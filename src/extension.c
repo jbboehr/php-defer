@@ -1,7 +1,5 @@
 /**
- * Copyright (C) 2024 John Boehr & contributors
- *
- * This file is part of php-vyrtue.
+ * Copyright (c) anno Domini nostri Jesu Christi MMXXIV John Boehr & contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -126,6 +124,9 @@ static PHP_MSHUTDOWN_FUNCTION(defer)
     return SUCCESS;
 }
 
+const char *PHP_DEFER_MOTD =
+    "Think not that I am come to send peace on earth: I came not to send peace, but a sword. Matthew 10:34";
+
 static PHP_MINFO_FUNCTION(defer)
 {
     php_info_print_table_start();
@@ -135,6 +136,10 @@ static PHP_MINFO_FUNCTION(defer)
     php_info_print_table_end();
 
     DISPLAY_INI_ENTRIES();
+
+    php_info_print_box_start(0);
+    PUTS(PHP_DEFER_MOTD);
+    php_info_print_box_end();
 }
 
 static PHP_GINIT_FUNCTION(defer)
@@ -146,8 +151,14 @@ static PHP_GINIT_FUNCTION(defer)
 }
 
 // clang-format off
+#if PHP_VERSION_ID >= 80400
+#define PHP_DEFER_FE(zend_name, name, arg_info, flags) ZEND_RAW_FENTRY(zend_name, name, arg_info, flags, NULL, NULL)
+#else
+#define PHP_DEFER_FE(zend_name, name, arg_info, flags) ZEND_RAW_FENTRY(zend_name, name, arg_info, flags)
+#endif
+
 const zend_function_entry defer_functions[] = {
-    ZEND_RAW_FENTRY("DeferExt\\call_functions", ZEND_FN(call_functions), call_functions_arginfo, 0)
+    PHP_DEFER_FE("DeferExt\\call_functions", ZEND_FN(call_functions), call_functions_arginfo, 0)
     PHP_FE_END
 };
 // clang-format on
